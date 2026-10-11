@@ -1,0 +1,1 @@
+{"wrongPassword":400,"login":200,"authenticated":200,"logout":200,"revoked":401}

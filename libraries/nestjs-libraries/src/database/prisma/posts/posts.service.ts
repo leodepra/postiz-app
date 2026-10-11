@@ -415,6 +415,18 @@ export class PostsService {
             );
           }
 
+          if (process.env.POSTIZ_LOCAL_ONLY === 'true') {
+            if (integration.providerIdentifier !== 'youtube') throw new BadRequestException('Provider disabled in local profile');
+            for (const content of post.value || []) {
+              for (const media of content.image || []) {
+                const owned = await this._mediaService.getMediaById(media.id);
+                if (!owned || owned.organizationId !== organization || owned.deletedAt || owned.path !== media.path) {
+                  throw new BadRequestException('Only media owned by this account can be published');
+                }
+              }
+            }
+          }
+
           return {
             type: replaceDraft ? 'schedule' : body?.type,
             ...post,
@@ -487,7 +499,17 @@ export class PostsService {
     );
   }
 
-  async updateMedia(id: string, imagesList: any[], convertToJPEG = false) {
+  async updateMedia(id: string, imagesList: any[], convertToJPEG = false, organizationId?: string) {
+    // Recheck ownership at execution time, including delayed publications.
+    if (process.env.POSTIZ_LOCAL_ONLY === 'true') {
+      if (!organizationId) throw new BadRequestException('Media owner required');
+      for (const media of imagesList || []) {
+        const owned = media.id && await this._mediaService.getMediaById(media.id);
+        if (!owned || owned.organizationId !== organizationId || owned.deletedAt || owned.path !== media.path) {
+          throw new BadRequestException('Only media owned by this account can be published');
+        }
+      }
+    }
     try {
       let imageUpdateNeeded = false;
       const getImageList = await Promise.all(
@@ -594,6 +616,7 @@ export class PostsService {
 
       return getImageList;
     } catch (err: any) {
+      if (process.env.POSTIZ_LOCAL_ONLY === 'true') throw err;
       return imagesList;
     }
   }

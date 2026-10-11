@@ -7,8 +7,11 @@ import {
   Post,
   Put,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
+import { Request } from 'express';
+import { localSessions } from '@gitroom/nestjs-libraries/security/local-session';
 import { IntegrationManager } from '@gitroom/nestjs-libraries/integrations/integration.manager';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
@@ -222,7 +225,8 @@ export class IntegrationsController {
     @Query('externalUrl') externalUrl: string,
     @Query('redirectUrl') redirectUrl: string,
     @Query('onboarding') onboarding: string,
-    @GetOrgFromRequest() org: Organization
+    @GetOrgFromRequest() org: Organization,
+    @Req() req: Request
   ) {
     if (
       !this._integrationManager
@@ -258,6 +262,13 @@ export class IntegrationsController {
       const { codeVerifier, state, url } =
         await integrationProvider.generateAuthUrl(getExternalUrl);
 
+      if (process.env.POSTIZ_LOCAL_ONLY === 'true') {
+        await ioRedis.set(`oauth-session:${state}`, localSessions.fingerprint(req.cookies?.auth || req.headers.auth), 'EX', 3600);
+        if (redirectUrl && new URL(redirectUrl, process.env.FRONTEND_URL).origin !== new URL(process.env.FRONTEND_URL!).origin) {
+          throw new Error('External local OAuth redirect rejected');
+        }
+      }
+
       if (refresh) {
         await ioRedis.set(`refresh:${state}`, refresh, 'EX', 3600);
       }
@@ -272,7 +283,7 @@ export class IntegrationsController {
 
       await ioRedis.set(`organization:${state}`, org.id, 'EX', 3600);
       await ioRedis.set(`login:${state}`, codeVerifier, 'EX', 3600);
-      await ioRedis.set(
+      if (getExternalUrl) await ioRedis.set(
         `external:${state}`,
         JSON.stringify(getExternalUrl),
         'EX',
@@ -355,6 +366,7 @@ export class IntegrationsController {
     @GetOrgFromRequest() org: Organization,
     @Body() body: IntegrationFunctionDto
   ): Promise<any> {
+    if (process.env.POSTIZ_LOCAL_ONLY === 'true' && body.name !== 'pages') throw new Error('Function disabled in local profile');
     const getIntegration = await this._integrationService.getIntegrationById(
       org.id,
       body.id

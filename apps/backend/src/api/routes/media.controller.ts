@@ -25,6 +25,8 @@ import { UploadFactory } from '@gitroom/nestjs-libraries/upload/upload.factory';
 import { SaveMediaInformationDto } from '@gitroom/nestjs-libraries/dtos/media/save.media.information.dto';
 import { VideoDto } from '@gitroom/nestjs-libraries/dtos/videos/video.dto';
 import { VideoFunctionDto } from '@gitroom/nestjs-libraries/dtos/videos/video.function.dto';
+import { resolveLocalMedia } from '@gitroom/helpers/security/local-media';
+import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 
 @ApiTags('Media')
 @Controller('/media')
@@ -32,8 +34,26 @@ export class MediaController {
   private storage = UploadFactory.createStorage();
   constructor(
     private _mediaService: MediaService,
-    private _subscriptionService: SubscriptionService
+    private _subscriptionService: SubscriptionService,
+    private _localMedia: PrismaRepository<'media'>
   ) {}
+
+  @Get('/local-file')
+  async localFile(@GetOrgFromRequest() org: Organization, @Query('file') file: string, @Res() res: Response) {
+    if (process.env.POSTIZ_LOCAL_ONLY !== 'true' || typeof file !== 'string') return res.sendStatus(404);
+    try {
+      const url = new URL('/uploads/' + file, process.env.FRONTEND_URL).href;
+      const path = resolveLocalMedia(url);
+      const owned = await this._localMedia.model.media.findFirst({
+        where: { organizationId: org.id, path: url, deletedAt: null }, select: { id: true },
+      });
+      if (!owned) return res.sendStatus(404);
+      res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Cache-Control', 'private, no-store');
+      return res.sendFile(path, { cacheControl: false });
+    } catch { return res.sendStatus(404); }
+  }
 
   @Delete('/:id')
   deleteMedia(@GetOrgFromRequest() org: Organization, @Param('id') id: string) {
@@ -138,7 +158,7 @@ export class MediaController {
       throw new BadRequestException('No file provided');
     }
 
-    if (preventSave === 'true') {
+    if (preventSave === 'true' && process.env.POSTIZ_LOCAL_ONLY !== 'true') {
       return { path: file.path };
     }
 

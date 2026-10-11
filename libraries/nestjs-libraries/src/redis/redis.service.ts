@@ -1,4 +1,6 @@
 import { Redis } from 'ioredis';
+import { isLocalProfile } from '@gitroom/helpers/security/local-profile';
+import { postgresEphemeralStore } from '@gitroom/nestjs-libraries/security/postgres-ephemeral-store';
 
 // Create a mock Redis implementation for testing environments
 class MockRedis {
@@ -36,7 +38,7 @@ class MockRedis {
 }
 
 // Use real Redis if REDIS_URL is defined, otherwise use MockRedis
-export const ioRedis = process.env.REDIS_URL
+export const ioRedis = isLocalProfile() ? (postgresEphemeralStore as unknown as Redis) : process.env.REDIS_URL
   ? new Redis(process.env.REDIS_URL, {
       maxRetriesPerRequest: null,
       connectTimeout: 10000,

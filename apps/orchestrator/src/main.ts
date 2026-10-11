@@ -8,13 +8,15 @@ dayjs.extend(utc);
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '@gitroom/orchestrator/app.module';
 import * as dns from 'node:dns';
+import { validateLocalProfile } from '@gitroom/helpers/security/local-profile';
 dns.setDefaultResultOrder('ipv4first');
 
 async function bootstrap() {
+  validateLocalProfile();
   const app = await NestFactory.create(AppModule);
   app.enableShutdownHooks();
   const port = process.env.ORCHESTRATOR_PORT || 3002;
-  await app.listen(port);
+  await app.listen(port, process.env.POSTIZ_LOCAL_ONLY === 'true' ? '127.0.0.1' : '0.0.0.0');
   console.log(`Orchestrator health check listening on port ${port}`);
 }
 

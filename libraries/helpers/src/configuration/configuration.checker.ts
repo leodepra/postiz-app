@@ -63,6 +63,7 @@ export class ConfigurationChecker {
   }
 
   checkRedis() {
+    if (this.cfg.POSTIZ_LOCAL_ONLY === 'true') return;
     if (!this.cfg.REDIS_URL) {
       this.issues.push('REDIS_URL not set');
     }

@@ -6,7 +6,7 @@ import 'react-tooltip/dist/react-tooltip.css';
 import '@copilotkit/react-ui/styles.css';
 import LayoutContext from '@gitroom/frontend/components/layout/layout.context';
 import { ReactNode } from 'react';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+
 import PlausibleProvider from 'next-plausible';
 import clsx from 'clsx';
 import { VariableContextComponent } from '@gitroom/react/helpers/variable.context';
@@ -25,11 +25,8 @@ import { HtmlComponent } from '@gitroom/frontend/components/layout/html.componen
 import Script from 'next/script';
 import { ChangeDirClient } from '@gitroom/frontend/components/new-layout/change.dir.client';
 
-const jakartaSans = Plus_Jakarta_Sans({
-  weight: ['600', '500'],
-  style: ['normal', 'italic'],
-  subsets: ['latin'],
-});
+// System fonts keep the local build independent of Google Fonts.
+const jakartaSans = { className: 'font-sans' };
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const cookieStore = await cookies();
@@ -79,7 +76,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           telegramBotName={process.env.TELEGRAM_BOT_NAME!}
           neynarClientId={process.env.NEYNAR_CLIENT_ID!}
           appleClientId={process.env.APPLE_CLIENT_ID!}
-          isSecured={!process.env.NOT_SECURED}
+          isSecured={process.env.NOT_SECURED !== 'true'}
           disableImageCompression={!!process.env.DISABLE_IMAGE_COMPRESSION}
           disableXAnalytics={!!process.env.DISABLE_X_ANALYTICS}
           sentryDsn={process.env.NEXT_PUBLIC_SENTRY_DSN!}

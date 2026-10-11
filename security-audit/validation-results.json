@@ -1,0 +1,32 @@
+{
+  "mode": "offline isolated source checks",
+  "node": "v24.18.0",
+  "passed": 5,
+  "results": [
+    {
+      "check": "AUTH-RESET",
+      "observed": "Middleware accepts verified password-reset payload with expired custom expires field",
+      "boundary": "JWT signature verification and database mocked; actual middleware executed"
+    },
+    {
+      "check": "AUTH-RATE",
+      "observed": "Global guard does not invoke limiter for login, reset request or registration",
+      "boundary": "Actual guard method; Nest context and parent limiter mocked"
+    },
+    {
+      "check": "STREAM-HTML",
+      "observed": "Public video handler forwards HTML and script unchanged with text/html, without sandbox CSP or attachment header",
+      "boundary": "Actual handler and real stream pipeline; upstream response and URL validation mocked; browser execution not tested"
+    },
+    {
+      "check": "SSRF-IPV6",
+      "observed": "IPv4-mapped loopback normalized to hexadecimal passes public HTTPS URL validator",
+      "boundary": "Actual validation functions executed; no connection to internal services attempted; TLS/transport reachability remains deployment dependent"
+    },
+    {
+      "check": "CONFIG-FALSE",
+      "observed": "NOT_SECURED=\"false\" omits Secure and HttpOnly cookie flags",
+      "boundary": "Actual cookie options expression evaluated using fixture environment"
+    }
+  ]
+}

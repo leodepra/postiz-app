@@ -28,6 +28,8 @@ export const GET = async (
     }>;
   }
 ) => {
+  // Local media must go through the authenticated backend, never this public route.
+  if (process.env.POSTIZ_LOCAL_ONLY === 'true') return new NextResponse(null, { status: 404 });
   const { path } = await context.params;
   const base = resolve(process.env.UPLOAD_DIRECTORY!);
   const filePath = resolve(base, (path ?? []).join('/'));

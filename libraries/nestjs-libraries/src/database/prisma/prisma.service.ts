@@ -1,5 +1,7 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { isLocalProfile } from '@gitroom/helpers/security/local-profile';
+import { integrationCipherMiddleware } from '@gitroom/helpers/security/integration-cipher-middleware';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -12,9 +14,20 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         },
       ],
     });
+    if (isLocalProfile()) {
+      this.$use(integrationCipherMiddleware);
+    }
   }
   async onModuleInit() {
     await this.$connect();
+    if (isLocalProfile()) {
+      const unsafe = await this.integration.count({ where: { OR: [
+        { token: { not: { startsWith: 'postiz:v1:' } } },
+        { refreshToken: { not: '' }, NOT: { refreshToken: { startsWith: 'postiz:v1:' } } },
+        { providerIdentifier: { not: 'youtube' } },
+      ] } });
+      if (unsafe) throw new Error('Local profile requires a new database or a reviewed token migration');
+    }
   }
 
   async onModuleDestroy() {

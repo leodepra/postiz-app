@@ -4,16 +4,13 @@ import 'react-tooltip/dist/react-tooltip.css';
 import '@copilotkit/react-ui/styles.css';
 import LayoutContext from '@gitroom/frontend/components/layout/layout.context';
 import { ReactNode } from 'react';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+
 import clsx from 'clsx';
 import { VariableContextComponent } from '@gitroom/react/helpers/variable.context';
 import UtmSaver from '@gitroom/helpers/utils/utm.saver';
 
-const jakartaSans = Plus_Jakarta_Sans({
-  weight: ['600', '500'],
-  style: ['normal', 'italic'],
-  subsets: ['latin'],
-});
+// System fonts keep the local build independent of Google Fonts.
+const jakartaSans = { className: 'font-sans' };
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
@@ -49,7 +46,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           telegramBotName={process.env.TELEGRAM_BOT_NAME!}
           neynarClientId={process.env.NEYNAR_CLIENT_ID!}
           appleClientId={process.env.APPLE_CLIENT_ID!}
-          isSecured={!process.env.NOT_SECURED}
+          isSecured={process.env.NOT_SECURED !== 'true'}
           isChatBase={false}
           disableImageCompression={!!process.env.DISABLE_IMAGE_COMPRESSION}
           disableXAnalytics={!!process.env.DISABLE_X_ANALYTICS}

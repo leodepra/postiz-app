@@ -8,53 +8,19 @@ import {
 import { URL } from 'node:url';
 import dns from 'node:dns/promises';
 import net from 'node:net';
+import * as ipaddr from 'ipaddr.js';
 
-export function isBlockedIPv4(ip: string): boolean {
-  const [a, b] = ip.split('.').map(Number);
-
-  if ([a, b].some((n) => Number.isNaN(n))) return true;
-
-  return (
-    a === 0 ||                       // 0.0.0.0/8
-    a === 10 ||                      // 10.0.0.0/8
-    a === 127 ||                     // 127.0.0.0/8
-    (a === 169 && b === 254) ||      // 169.254.0.0/16
-    (a === 172 && b >= 16 && b <= 31) || // 172.16.0.0/12
-    (a === 192 && b === 168) ||      // 192.168.0.0/16
-    (a === 100 && b >= 64 && b <= 127) || // 100.64.0.0/10
-    (a === 198 && (b === 18 || b === 19)) || // 198.18.0.0/15
-    a >= 224                         // multicast/reserved
-  );
-}
-
-export function isBlockedIPv6(ip: string): boolean {
-  const normalized = ip.toLowerCase();
-
-  return (
-    normalized === '::1' ||          // loopback
-    normalized === '::' ||           // unspecified
-    normalized.startsWith('fe80:') || // link-local
-    normalized.startsWith('fc') ||   // unique local fc00::/7
-    normalized.startsWith('fd') ||   // unique local fd00::/7
-    normalized.startsWith('ff')      // multicast
-  );
-}
-
+// Normalize before classifying, including hexadecimal IPv4-mapped IPv6.
 export function isBlockedIp(ip: string): boolean {
-  const version = net.isIP(ip);
-  if (version === 4) {
-    return isBlockedIPv4(ip);
-  }
-  if (version === 6) {
-    // IPv4-mapped IPv6 (::ffff:a.b.c.d) — extract and check as IPv4
-    const mapped = ip.toLowerCase().match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    if (mapped) {
-      return isBlockedIPv4(mapped[1]);
-    }
-    return isBlockedIPv6(ip);
-  }
-  return true;
+  try {
+    if (!net.isIP(ip) || ip.includes('%')) return true;
+    const address = ipaddr.process(ip);
+    return address.range() !== 'unicast';
+  } catch { return true; }
 }
+
+export const isBlockedIPv4 = isBlockedIp;
+export const isBlockedIPv6 = isBlockedIp;
 
 export async function isSafePublicHttpsUrl(value: unknown): Promise<boolean> {
   if (typeof value !== 'string' || !value.trim()) {
@@ -68,7 +34,7 @@ export async function isSafePublicHttpsUrl(value: unknown): Promise<boolean> {
     return false;
   }
 
-  if (parsed.protocol !== 'https:') {
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password || (parsed.port && parsed.port !== '443')) {
     return false;
   }
 

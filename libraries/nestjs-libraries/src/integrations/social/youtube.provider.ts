@@ -1,3 +1,4 @@
+import { validateYoutubeUploadDestination } from '@gitroom/helpers/security/youtube-upload';
 import {
   AnalyticsData,
   AuthTokenDetails,
@@ -21,6 +22,7 @@ import {
 import * as process from 'node:process';
 import dayjs from 'dayjs';
 import { createReadStream, statSync } from 'fs';
+import { resolveLocalMedia } from '@gitroom/helpers/security/local-media';
 import { getSsrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
 import { setHeartbeatDetails } from '@gitroom/nestjs-libraries/temporal/temporal.heartbeat';
 import { Rules } from '@gitroom/nestjs-libraries/chat/rules.description.decorator';
@@ -67,8 +69,10 @@ export class YoutubeProvider extends SocialAbstract implements SocialProvider {
     'https://www.googleapis.com/auth/youtube.force-ssl',
     'https://www.googleapis.com/auth/youtube.readonly',
     'https://www.googleapis.com/auth/youtube.upload',
-    'https://www.googleapis.com/auth/youtubepartner',
-    'https://www.googleapis.com/auth/yt-analytics.readonly',
+    ...(process.env.POSTIZ_LOCAL_ONLY === 'true' ? [] : [
+      'https://www.googleapis.com/auth/youtubepartner',
+      'https://www.googleapis.com/auth/yt-analytics.readonly',
+    ]),
   ];
 
   editor = 'normal' as const;
@@ -429,6 +433,7 @@ export class YoutubeProvider extends SocialAbstract implements SocialProvider {
   // Resolves the total byte size of the media without loading it into memory:
   // a HEAD request for remote URLs, statSync for local files.
   private async youtubeMediaSize(path: string): Promise<number> {
+    if (process.env.POSTIZ_LOCAL_ONLY === 'true') return statSync(resolveLocalMedia(path)).size;
     if (path.indexOf('http') === 0) {
       // the media path is user-influenced, keep the SSRF-safe dispatcher that
       // this.fetch applies to every other outbound request. identity encoding
@@ -459,6 +464,7 @@ export class YoutubeProvider extends SocialAbstract implements SocialProvider {
   // never hold the whole file in memory: a ranged GET for remote URLs, a ranged
   // read stream for local files.
   private async youtubeChunkStream(path: string, start: number, end: number) {
+    if (process.env.POSTIZ_LOCAL_ONLY === 'true') return createReadStream(resolveLocalMedia(path), { start, end });
     if (path.indexOf('http') === 0) {
       // identity encoding so the store keeps content-length and can answer
       // with the requested range: a transformed (compressed) response loses
@@ -501,7 +507,9 @@ export class YoutubeProvider extends SocialAbstract implements SocialProvider {
     videoSize: number
   ): Promise<{ videoId: string } | { uploadedBytes: number }> {
     setHeartbeatDetails('youtube: probe resumable session');
+    validateYoutubeUploadDestination(uploadUri);
     const probe = await fetch(uploadUri, {
+      redirect: 'error',
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -592,6 +600,12 @@ export class YoutubeProvider extends SocialAbstract implements SocialProvider {
     );
 
     const uploadUri = session.headers.get('location');
+    if (process.env.POSTIZ_LOCAL_ONLY === 'true' && uploadUri) {
+      const target = new URL(uploadUri);
+      if (target.protocol !== 'https:' || target.hostname !== 'www.googleapis.com' || target.port || target.username || target.password) {
+        throw new Error('Unexpected YouTube upload destination');
+      }
+    }
     if (!uploadUri) {
       throw new BadBody(
         this.identifier,
@@ -718,7 +732,9 @@ export class YoutubeProvider extends SocialAbstract implements SocialProvider {
           );
 
           setHeartbeatDetails('youtube: upload chunk to google');
+          validateYoutubeUploadDestination(pendingData.uploadUri);
           const upload = await fetch(pendingData.uploadUri, {
+            redirect: 'error',
             method: 'PUT',
             headers: {
               Authorization: `Bearer ${accessToken}`,

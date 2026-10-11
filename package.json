@@ -37,7 +37,8 @@
     "docker-build": "./var/docker/docker-build.sh",
     "docker-create": "./var/docker/docker-create.sh",
     "postinstall": "pnpm run prisma-generate",
-    "test": "jest --coverage --detectOpenHandles --reporters=default --reporters=jest-junit"
+    "test": "jest --coverage --detectOpenHandles --reporters=default --reporters=jest-junit",
+    "test:security:local": "node --test security-audit/tests/*.test.cjs"
   },
   "dependencies": {
     "@ag-ui/mastra": "^1.1.4",
@@ -79,7 +80,6 @@
     "@nestjs/swagger": "^11.4.3",
     "@nestjs/throttler": "^6.5.0",
     "@neynar/nodejs-sdk": "^3.112.0",
-    "@pigment-css/react": "^0.0.30",
     "@postiz/wallets": "^0.0.1",
     "@prisma/client": "6.5.0",
     "@sentry/nestjs": "10.56.0",
@@ -145,17 +145,16 @@
     "array-move": "^4.0.0",
     "async-mutex": "^0.5.0",
     "axios": "^1.19.0",
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^6.0.0",
     "bottleneck": "^2.19.5",
     "bs58": "^6.0.0",
     "bufferutil": "^4.0.8",
-    "canvas": "^2.11.2",
     "chart.js": "^4.4.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "class-validator-jsonschema": "^5.1.0",
     "clsx": "^2.1.0",
-    "compression": "^1.8.1",
+    "compression": "1.8.2",
     "concat-stream": "^2.0.0",
     "cookie-parser": "^1.4.7",
     "copy-to-clipboard": "^3.3.3",
@@ -177,6 +176,7 @@
     "i18next-resources-to-backend": "^1.2.1",
     "image-to-pdf": "^3.0.2",
     "ioredis": "^5.3.2",
+    "ipaddr.js": "2.5.0",
     "isomorphic-dompurify": "^3.10.0",
     "json-to-graphql-query": "^2.2.5",
     "jsonwebtoken": "^9.0.2",
@@ -190,7 +190,7 @@
     "nestjs-command": "^3.1.4",
     "nestjs-real-ip": "^3.0.1",
     "nestjs-temporal-core": "^3.2.0",
-    "next": "16.3.1",
+    "next": "16.3.8",
     "next-plausible": "^3.12.0",
     "node-fetch": "^3.3.2",
     "node-telegram-bot-api": "^0.66.0",
@@ -226,7 +226,7 @@
     "rxjs": "^7.8.0",
     "sass": "^1.89.2",
     "sha256": "^0.2.0",
-    "sharp": "^0.33.4",
+    "sharp": "0.35.5",
     "simple-statistics": "^7.8.3",
     "slugify": "^1.6.6",
     "stripe": "^20.4.0",
@@ -245,6 +245,7 @@
     "tweetnacl": "^1.0.3",
     "twitter-api-v2": "^1.29.0",
     "twitter-text": "^3.1.0",
+    "undici": "6.29.0",
     "use-debounce": "^10.0.0",
     "utf-8-validate": "^5.0.10",
     "uuid": "^10.0.0",
@@ -284,13 +285,11 @@
     "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "7.18.0",
     "@vitejs/plugin-react": "^6.0.5",
-    "@vitest/coverage-v8": "1.6.0",
-    "@vitest/ui": "1.6.0",
     "autoprefixer": "^10.4.17",
     "babel-jest": "29.7.0",
     "cross-env": "^10.0.0",
     "eslint": "8.57.0",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.3.8",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "2.27.5",
     "eslint-plugin-jsx-a11y": "6.7.1",
@@ -313,8 +312,7 @@
     "tsup": "^8.5.0",
     "typescript": "5.5.4",
     "vite": "^8.2.1",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "3.1.4"
+    "vite-tsconfig-paths": "^5.1.4"
   },
   "volta": {
     "node": "20.17.0"
@@ -326,11 +324,19 @@
   "pnpm": {
     "overrides": {
       "multer": "^2.2.0",
-      "next": "16.3.1",
+      "next": "16.3.8",
       "react": "19.2.4",
       "react-dom": "19.2.4",
       "@types/react": "19.1.8",
-      "@types/react-dom": "19.1.6"
+      "@types/react-dom": "19.1.6",
+      "form-data@<2.5.6": "2.5.6",
+      "form-data@>=3 <3.0.5": "3.0.5",
+      "form-data@>=4 <4.0.6": "4.0.6",
+      "handlebars": "4.7.10",
+      "piscina@4": "4.9.4",
+      "protobufjs@7": "7.6.6",
+      "proxy-addr": "2.0.8",
+      "shell-quote": "1.12.0"
     },
     "onlyBuiltDependencies": [
       "bcrypt"

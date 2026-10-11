@@ -13,6 +13,22 @@ acceptLanguage.languages(languages);
 // This function can be marked `async` if using `await` inside
 export async function proxy(request: NextRequest) {
   const nextUrl = request.nextUrl;
+  if (process.env.POSTIZ_LOCAL_ONLY === 'true') {
+    const origin = new URL(process.env.FRONTEND_URL!);
+    if (request.headers.get('host') !== origin.host || request.headers.has('auth') || nextUrl.searchParams.has('loggedAuth')) {
+      return new NextResponse(null, { status: 403 });
+    }
+    const suppliedOrigin = request.headers.get('origin');
+    if ((suppliedOrigin && suppliedOrigin !== origin.origin) ||
+        (!['GET', 'HEAD', 'OPTIONS'].includes(request.method) && suppliedOrigin !== origin.origin)) {
+      return new NextResponse(null, { status: 403 });
+    }
+    if (/^\/(?:uploads|p|provider|oauth|mcp)(?:\/|$)/.test(nextUrl.pathname)) return new NextResponse(null, { status: 404 });
+    if (nextUrl.pathname.startsWith('/integrations/social/') &&
+        (nextUrl.pathname !== '/integrations/social/youtube' || !request.cookies.get('auth'))) {
+      return new NextResponse(null, { status: 403 });
+    }
+  }
   const authCookie =
     request.cookies.get('auth') ||
     request.headers.get('auth') ||
@@ -69,9 +85,9 @@ export async function proxy(request: NextRequest) {
     );
     response.cookies.set('auth', '', {
       path: '/',
-      ...(!process.env.NOT_SECURED
+      ...(process.env.NOT_SECURED !== 'true'
         ? {
-            secure: true,
+            secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
             httpOnly: true,
             sameSite: false,
           }
@@ -116,10 +132,10 @@ export async function proxy(request: NextRequest) {
     if (org) {
       const redirect = NextResponse.redirect(new URL(`/`, nextUrl.href));
       redirect.cookies.set('org', org, {
-        ...(!process.env.NOT_SECURED
+        ...(process.env.NOT_SECURED !== 'true'
           ? {
               path: '/',
-              secure: true,
+              secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
               httpOnly: true,
               sameSite: false,
               domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
@@ -146,10 +162,10 @@ export async function proxy(request: NextRequest) {
       );
       if (id) {
         redirect.cookies.set('showorg', id, {
-          ...(!process.env.NOT_SECURED
+          ...(process.env.NOT_SECURED !== 'true'
             ? {
                 path: '/',
-                secure: true,
+                secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
                 httpOnly: true,
                 sameSite: false,
                 domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
@@ -161,6 +177,7 @@ export async function proxy(request: NextRequest) {
       return redirect;
     }
     if (nextUrl.pathname === '/') {
+      if (process.env.POSTIZ_LOCAL_ONLY === 'true') return NextResponse.redirect(new URL('/launches', nextUrl.href));
       return NextResponse.redirect(
         new URL(
           !!process.env.IS_GENERAL ? '/launches' : `/analytics`,

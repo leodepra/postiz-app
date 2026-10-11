@@ -113,7 +113,7 @@ export class IntegrationService {
     timezone?: number,
     customInstanceDetails?: string
   ) {
-    const uploadedPicture = picture
+    const uploadedPicture = process.env.POSTIZ_LOCAL_ONLY === 'true' ? '' : picture
       ? picture?.indexOf('imagedelivery.net') > -1
         ? picture
         : await this.storage.uploadSimple(picture).catch((err) => {

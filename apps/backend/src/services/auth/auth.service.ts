@@ -10,6 +10,8 @@ import dayjs from 'dayjs';
 import { ForgotReturnPasswordDto } from '@gitroom/nestjs-libraries/dtos/auth/forgot-return.password.dto';
 import { EmailService } from '@gitroom/nestjs-libraries/services/email.service';
 import { NewsletterService } from '@gitroom/nestjs-libraries/newsletter/newsletter.service';
+import { isLocalProfile } from '@gitroom/helpers/security/local-profile';
+import { localSessions } from '@gitroom/nestjs-libraries/security/local-session';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +22,7 @@ export class AuthService {
     private _providerManager: AuthProviderManager
   ) {}
   async canRegister(provider: string) {
+    if (isLocalProfile()) return false;
     if (
       process.env.DISABLE_REGISTRATION !== 'true' ||
       provider === Provider.GENERIC
@@ -37,6 +40,9 @@ export class AuthService {
     userAgent: string,
     addToOrg?: boolean | { orgId: string; role: 'USER' | 'ADMIN'; id: string }
   ) {
+    if (isLocalProfile() && (provider !== Provider.LOCAL || body instanceof CreateOrgUserDto)) {
+      throw new Error('Only the provisioned local account can sign in');
+    }
     if (provider === Provider.LOCAL) {
       if (process.env.DISALLOW_PLUS && body.email.includes('+')) {
         throw new Error('Email with plus sign is not allowed');
@@ -299,7 +305,7 @@ export class AuthService {
     // the mobile app passes redirect_uri and keeps no cookies, the web flow
     // never passes it, so the state nonce is only enforced for the web flow
     if (
-      !process.env.NOT_SECURED &&
+      process.env.NOT_SECURED !== 'true' &&
       !redirectUri &&
       (!state || state !== stateCookie)
     ) {
@@ -324,6 +330,7 @@ export class AuthService {
   }
 
   private async jwt(user: User) {
+    if (isLocalProfile()) return localSessions.create(user);
     if (user.password) {
       delete user.password;
     }

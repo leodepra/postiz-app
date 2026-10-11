@@ -1,0 +1,133 @@
+# Candidate configuration: do not connect accounts before the validation matrix passes.
+name: postiz-local
+x-app: &app
+  image: postiz-local-app:review
+  build: { context: ., dockerfile: var/local/Dockerfile, target: runtime }
+  network_mode: service:guard
+  depends_on:
+    guard: { condition: service_healthy }
+    postgres: { condition: service_healthy }
+    redis: { condition: service_started }
+    temporal: { condition: service_started }
+    egress: { condition: service_started }
+  environment:
+    POSTIZ_LOCAL_ONLY: 'true'
+  secrets: [local_config]
+  user: '1000:1000'
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  read_only: true
+  init: true
+  pids_limit: 256
+  mem_limit: 3g
+  tmpfs: ['/tmp:rw,noexec,nosuid,size=256m', '/app/apps/frontend/.next/cache:rw,nosuid,size=128m,uid=1000,gid=1000']
+  volumes: [media:/uploads]
+
+services:
+  guard:
+    build: { context: ., dockerfile: var/local/Dockerfile.guard }
+    cap_drop: [ALL]
+    cap_add: [NET_ADMIN]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    pids_limit: 16
+    mem_limit: 32m
+    networks:
+      private: { ipv4_address: 172.30.251.10 }
+    healthcheck:
+      test: [CMD, test, -f, /tmp/ready]
+      interval: 2s
+      timeout: 1s
+      retries: 15
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postiz
+      POSTGRES_DB: postiz
+      POSTGRES_PASSWORD_FILE: /run/secrets/database_password
+    secrets: [database_password]
+    networks:
+      private: { ipv4_address: 172.30.251.11 }
+    volumes: [database:/var/lib/postgresql/data]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, pg_isready, -U, postiz, -d, postiz]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: [redis-server, /run/secrets/redis_config]
+    secrets: [redis_config]
+    networks:
+      private: { ipv4_address: 172.30.251.12 }
+    cap_drop: [ALL]
+    user: '999:999'
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/data]
+
+  temporal:
+    # Development server with persistent SQLite: pilot only, not production HA.
+    image: temporalio/temporal:1.4.1
+    command: [server, start-dev, --ip, 0.0.0.0, --db-filename, /data/temporal.db, --headless]
+    networks:
+      private: { ipv4_address: 172.30.251.13 }
+    volumes: [temporal:/data]
+    security_opt: [no-new-privileges:true]
+
+  egress:
+    build: { context: ., dockerfile: var/local/Dockerfile, target: egress }
+    networks:
+      private: { ipv4_address: 172.30.251.14 }
+      internet: {}
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    pids_limit: 32
+    mem_limit: 128m
+
+  backend:
+    <<: *app
+    command: [apps/backend/dist/apps/backend/src/main.js]
+
+  frontend:
+    <<: *app
+    command: [node_modules/next/dist/bin/next, start, apps/frontend, -p, '4200', -H, 0.0.0.0]
+    volumes: []
+
+  worker:
+    <<: *app
+    command: [apps/orchestrator/dist/apps/orchestrator/src/main.js]
+
+  gateway:
+    image: caddy:2-alpine
+    ports: ['127.0.0.1:7443:7443']
+    networks: [private]
+    volumes:
+      - ./var/local/Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+      - caddy_config:/config
+    depends_on: [backend, frontend]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+networks:
+  private:
+    internal: true
+    ipam:
+      config: [{ subnet: 172.30.251.0/24 }]
+  internet: {}
+volumes:
+  database:
+  media:
+  temporal:
+  certificates:
+  caddy_config:
+secrets:
+  local_config: { file: ./local-data/secrets/config.json }
+  database_password: { file: ./local-data/secrets/database-password }
+  redis_config: { file: ./local-data/secrets/redis.conf }

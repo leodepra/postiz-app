@@ -1,0 +1,6 @@
+{
+  "connection": { "success": true, "role": "postiz_app", "schema": "postiz", "tls": true, "applicationTables": 88 },
+  "certificate": { "subject": "Supabase Root 2021 CA", "fileSha256": "700723581420DD1AC98FD7E9AC529F0EF210EADCAF87FC868A3AD7D114C2F3B7", "validUntil": "2031-04-26", "source": "Certificate supplied by the user from the Supabase dashboard" },
+  "ephemeralLiveTests": { "success": true, "checks": ["encrypted read/write", "concurrent SET NX", "single-use GETDEL", "expiry", "lists", "rate limiting", "authenticated expiry"], "testRecordsRemoved": true },
+  "applicationReady": false
+}

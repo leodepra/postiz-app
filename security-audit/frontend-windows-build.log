@@ -1,0 +1,89 @@
+▲ Next.js 16.3.8 (webpack)
+✓ Running next.config.js took 9.8s
+- Experiments (use with caution):
+  · proxyTimeout: 90000
+
+  Creating an optimized production build ...
+⚠ Compiled with warnings in 3.8min
+
+../../node_modules/@sentry/node/node_modules/require-in-the-middle/index.js
+Critical dependency: require function is used in a way in which dependencies cannot be statically extracted
+
+Import trace for requested module:
+../../node_modules/@sentry/node/node_modules/require-in-the-middle/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/index.js
+../../node_modules/@sentry/node/build/cjs/integrations/tracing/express.js
+../../node_modules/@sentry/node/build/cjs/index.js
+../../node_modules/@sentry/nextjs/build/cjs/index.server.js
+./src/app/global-error.tsx
+
+../../node_modules/@sentry/node/node_modules/require-in-the-middle/index.js
+Critical dependency: require function is used in a way in which dependencies cannot be statically extracted
+
+Import trace for requested module:
+../../node_modules/@sentry/node/node_modules/require-in-the-middle/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/index.js
+../../node_modules/@sentry/node/build/cjs/integrations/tracing/express.js
+../../node_modules/@sentry/node/build/cjs/index.js
+../../node_modules/@sentry/nextjs/build/cjs/index.server.js
+../../libraries/react-shared-libraries/src/sentry/initialize.sentry.next.basic.ts
+../../libraries/react-shared-libraries/src/sentry/initialize.sentry.server.ts
+./src/sentry.server.config.ts
+
+  Running TypeScript ...
+  Finished TypeScript in 44s ...
+  Collecting page data using 15 workers ...
+🌐 i18next is maintained with support from Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+🌐 i18next is maintained with support from Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+🌐 i18next is maintained with support from Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+🌐 i18next is maintained with support from Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+🌐 i18next is maintained with support from Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+🌐 i18next is maintained with support from Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+🌐 i18next is maintained with support from Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+  Generating static pages using 15 workers (0/2) ...
+✓ Generating static pages using 15 workers (2/2) in 488ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /_not-found
+├ ƒ /admin/errors
+├ ƒ /admin/stats
+├ ƒ /agents
+├ ƒ /agents/[id]
+├ ƒ /analytics
+├ ƒ /api/uploads/[[...path]]
+├ ƒ /auth
+├ ƒ /auth/activate
+├ ƒ /auth/activate/[code]
+├ ƒ /auth/forgot
+├ ƒ /auth/forgot/[token]
+├ ƒ /auth/login
+├ ƒ /auth/login-required
+├ ƒ /billing
+├ ƒ /billing/lifetime
+├ ƒ /err
+├ ƒ /integrations/social/[provider]
+├ ƒ /launches
+├ ƒ /media
+├ ƒ /modal/[style]/[platform]
+├ ƒ /oauth/authorize
+├ ƒ /p/[id]
+├ ƒ /plugs
+├ ƒ /provider/[p]
+├ ƒ /provider/add
+├ ƒ /settings
+└ ƒ /third-party
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

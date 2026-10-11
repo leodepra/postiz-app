@@ -3,11 +3,18 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // JSDOM reads its bundled stylesheet relative to its installed package.
+  serverExternalPackages: ['isomorphic-dompurify', 'jsdom'],
   experimental: {
     proxyTimeout: 90_000,
   },
   // Document-Policy header for browser profiling
   async headers() {
+    if (process.env.POSTIZ_LOCAL_ONLY === 'true') return [{ source: '/:path*', headers: [
+      { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; font-src 'self' data:; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'" },
+      { key: 'Referrer-Policy', value: 'no-referrer' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+    ] }];
     return [
       {
         source: '/:path*',
@@ -23,18 +30,19 @@ const nextConfig = {
   reactStrictMode: false,
   transpilePackages: ['crypto-hash'],
   // Enable production sourcemaps for Sentry
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: process.env.POSTIZ_LOCAL_ONLY !== 'true',
 
   // Custom webpack config to ensure sourcemaps are generated properly
   webpack: (config, { buildId, dev, isServer, defaultLoaders }) => {
     // Enable sourcemaps for both client and server in production
-    if (!dev) {
+    if (!dev && process.env.POSTIZ_LOCAL_ONLY !== 'true') {
       config.devtool = isServer ? 'source-map' : 'hidden-source-map';
     }
 
     return config;
   },
   async redirects() {
+    if (process.env.POSTIZ_LOCAL_ONLY === 'true') return [];
     return [
       {
         source: '/api/uploads/:path*',
@@ -45,6 +53,7 @@ const nextConfig = {
     ];
   },
   async rewrites() {
+    if (process.env.POSTIZ_LOCAL_ONLY === 'true') return [];
     return [
       {
         source: '/uploads/:path*',
@@ -57,7 +66,7 @@ const nextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+export default process.env.POSTIZ_LOCAL_ONLY === 'true' ? nextConfig : withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,

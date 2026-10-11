@@ -19,12 +19,15 @@ import { PostValidationExceptionFilter } from '@gitroom/backend/api/routes/posts
 import { HttpExceptionFilter } from '@gitroom/nestjs-libraries/services/exception.filter';
 import { ConfigurationChecker } from '@gitroom/helpers/configuration/configuration.checker';
 import { startMcp } from '@gitroom/nestjs-libraries/chat/start.mcp';
+import { localSecurity } from './services/auth/local-security.middleware';
+import { isLocalProfile, validateLocalProfile } from '@gitroom/helpers/security/local-profile';
 
 async function start() {
+  validateLocalProfile();
   const app = await NestFactory.create(AppModule, {
     rawBody: true,
     cors: {
-      ...(!process.env.NOT_SECURED ? { credentials: true } : {}),
+      ...(process.env.NOT_SECURED !== 'true' ? { credentials: true } : {}),
       allowedHeaders: [
         'Content-Type',
         'Authorization',
@@ -40,11 +43,11 @@ async function start() {
         'onboarding',
         'activate',
         'x-copilotkit-runtime-client-gql-version',
-        ...(process.env.NOT_SECURED ? ['auth', 'showorg', 'impersonate'] : []),
+        ...(process.env.NOT_SECURED === 'true' ? ['auth', 'showorg', 'impersonate'] : []),
       ],
       origin: [
         process.env.FRONTEND_URL,
-        'http://localhost:6274',
+        ...(!isLocalProfile() ? ['http://localhost:6274'] : []),
         ...(process.env.MAIN_URL ? [process.env.MAIN_URL] : []),
         // Optional: the Canva app calls the public API from its iframe origin
         // (browsers send it lowercase, e.g. https://app-aabbcc.canva-apps.com)
@@ -59,7 +62,9 @@ async function start() {
     },
   });
 
-  await startMcp(app);
+  app.use(cookieParser());
+  app.use(localSecurity);
+  if (!isLocalProfile()) await startMcp(app);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -77,12 +82,16 @@ async function start() {
   app.useGlobalFilters(new PostValidationExceptionFilter());
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  loadSwagger(app);
+  if (!isLocalProfile()) loadSwagger(app);
 
   const port = process.env.PORT || 3000;
 
   try {
-    await app.listen(port);
+    if (isLocalProfile() && process.platform === 'win32') {
+      await app.listen(port, '127.0.0.1');
+    } else {
+      await app.listen(port);
+    }
     console.log('Backend started successfully on port ' + port);
 
     checkConfiguration(); // Do this last, so that users will see obvious issues at the end of the startup log without having to scroll up.

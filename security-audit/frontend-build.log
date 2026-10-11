@@ -1,0 +1,42 @@
+▲ Next.js 16.3.8 (webpack)
+✓ Running next.config.js took 8.8s
+- Experiments (use with caution):
+  · proxyTimeout: 90000
+
+  Creating an optimized production build ...
+⚠ Compiled with warnings in 4.0min
+
+../../node_modules/@sentry/node/node_modules/require-in-the-middle/index.js
+Critical dependency: require function is used in a way in which dependencies cannot be statically extracted
+
+Import trace for requested module:
+../../node_modules/@sentry/node/node_modules/require-in-the-middle/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/index.js
+../../node_modules/@sentry/node/build/cjs/integrations/tracing/express.js
+../../node_modules/@sentry/node/build/cjs/index.js
+../../node_modules/@sentry/nextjs/build/cjs/index.server.js
+./src/app/global-error.tsx
+
+../../node_modules/@sentry/node/node_modules/require-in-the-middle/index.js
+Critical dependency: require function is used in a way in which dependencies cannot be statically extracted
+
+Import trace for requested module:
+../../node_modules/@sentry/node/node_modules/require-in-the-middle/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+../../node_modules/@sentry/node/node_modules/@opentelemetry/instrumentation/build/esm/index.js
+../../node_modules/@sentry/node/build/cjs/integrations/tracing/express.js
+../../node_modules/@sentry/node/build/cjs/index.js
+../../node_modules/@sentry/nextjs/build/cjs/index.server.js
+../../libraries/react-shared-libraries/src/sentry/initialize.sentry.next.basic.ts
+../../libraries/react-shared-libraries/src/sentry/initialize.sentry.server.ts
+./src/sentry.server.config.ts
+
+  Running TypeScript ...
+../../libraries/helpers/src/utils/internal.fetch.ts(10,65): error TS2339: Property 'entries' does not exist on type 'Headers'.
+Failed to type check.
+

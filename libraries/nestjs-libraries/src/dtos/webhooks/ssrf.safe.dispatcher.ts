@@ -1,4 +1,4 @@
-import { Agent } from 'undici';
+import { Agent, ProxyAgent, buildConnector } from 'undici';
 import axios, { AxiosInstance } from 'axios';
 import dns from 'node:dns';
 import net from 'node:net';
@@ -45,11 +45,16 @@ function ssrfSafeLookup(
   });
 }
 
+const connector = buildConnector({ lookup: ssrfSafeLookup });
 export const ssrfSafeDispatcher = new Agent({
-  connect: {
-    lookup: ssrfSafeLookup,
+  connect(options, callback) {
+    const hostname = options.hostname.replace(/^\[|\]$/g, '');
+    // Literal IP connections skip DNS lookup, including after redirects.
+    if (net.isIP(hostname) && isBlockedIp(hostname)) return callback(new Error('Blocked IP'), null);
+    return connector(options, callback);
   },
 });
+let localProxy: ProxyAgent;
 
 // axios can't use an undici dispatcher, but Node's http(s) agents accept the
 // same `lookup` hook, so axios requests (providers that need form-data /
@@ -65,7 +70,12 @@ const ssrfSafeAxios = axios.create({
 // instances that live on a private network (e.g. the same Docker network or VPC).
 // Setting DISABLE_SSRF_PROTECTION=true opts those deployments out of the IP
 // guard. It stays ON by default so the hosted product is protected.
-export function getSsrfSafeDispatcher(): Agent | undefined {
+export function getSsrfSafeDispatcher(): Agent | ProxyAgent | undefined {
+  if (process.env.POSTIZ_LOCAL_ONLY === 'true') {
+    const expectedProxy = process.platform === 'win32' ? 'http://127.0.0.1:3128' : 'http://172.30.251.14:3128';
+    if (process.env.HTTPS_PROXY !== expectedProxy) throw new Error('Local egress proxy required');
+    return localProxy ||= new ProxyAgent(process.env.HTTPS_PROXY);
+  }
   return process.env.DISABLE_SSRF_PROTECTION === 'true'
     ? undefined
     : ssrfSafeDispatcher;

@@ -1,0 +1,17 @@
+✔ opaque sessions expire, revoke and invalidate on password changes; JWTs cannot authenticate (2.1821ms)
+✔ integration AEAD is randomized and rejects tampering, wrong key and plaintext (2.1198ms)
+✔ Prisma middleware encrypts creates, upserts, bulk writes and set updates without mutating input (8.1556ms)
+✔ egress proxy rejects unlisted destinations and private DNS results over a real socket (25.581ms)
+✔ SSRF dispatcher blocks literal IPs even when DNS lookup would be bypassed (166.4848ms)
+✔ SSRF blocks mapped IPv6, reserved, private, multicast and malformed addresses (0.9747ms)
+✔ local middleware denies rebinding, cross-origin mutations and unused API surfaces (2.2545ms)
+✔ local configuration fails closed and cookies are host-only (0.8406ms)
+✔ local media confines reads and rejects external URLs and traversal (9.6875ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 838.7643

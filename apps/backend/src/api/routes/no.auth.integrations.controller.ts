@@ -5,6 +5,7 @@ import {
   HttpException,
   Param,
   Post,
+  Req,
   UseFilters,
 } from '@nestjs/common';
 import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
@@ -24,6 +25,9 @@ import {
 import { RefreshIntegrationService } from '@gitroom/nestjs-libraries/integrations/refresh.integration.service';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { getSsrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
+import { Request } from 'express';
+import { localSessions } from '@gitroom/nestjs-libraries/security/local-session';
+import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/users.service';
 
 @ApiTags('Integrations')
 @Controller('/integrations')
@@ -32,7 +36,8 @@ export class NoAuthIntegrationsController {
     private _integrationManager: IntegrationManager,
     private _integrationService: IntegrationService,
     private _refreshIntegrationService: RefreshIntegrationService,
-    private _organizationService: OrganizationService
+    private _organizationService: OrganizationService,
+    private _localUsers: UsersService
   ) {}
 
   @Get('/')
@@ -45,7 +50,8 @@ export class NoAuthIntegrationsController {
   @UseFilters(new NotEnoughScopesFilter())
   async connectSocialMedia(
     @Param('integration') integration: string,
-    @Body() body: ConnectIntegrationDto
+    @Body() body: ConnectIntegrationDto,
+    @Req() req: Request
   ) {
     if (
       !this._integrationManager
@@ -75,6 +81,20 @@ export class NoAuthIntegrationsController {
     }
 
     const org = await this._organizationService.getOrgById(organization);
+    if (process.env.POSTIZ_LOCAL_ONLY === 'true') {
+      const binding = await ioRedis.get(`oauth-session:${body.state}`);
+      if (!binding || binding !== localSessions.fingerprint(req.cookies?.auth || req.headers.auth)) throw new HttpException('Invalid local OAuth session', 403);
+      const session = await localSessions.read(req.cookies?.auth || req.headers.auth);
+      const user = await this._localUsers.getUserById(session.id);
+      if (!user?.activated || !localSessions.matchesPassword(session, user)) throw new HttpException('Invalid local OAuth session', 403);
+      const memberships = await this._organizationService.getOrgsByUserId(session.id);
+      if (!memberships.some(member => member.id === organization && member.users.some(user => !user.disabled))) {
+        throw new HttpException('Invalid local OAuth session', 403);
+      }
+      if (await ioRedis.getdel(`login:${body.state}`) !== getCodeVerifier) throw new HttpException('OAuth state already consumed', 400);
+      await ioRedis.del(`organization:${body.state}`);
+      await ioRedis.del(`oauth-session:${body.state}`);
+    }
 
     if (!integrationProvider.customFields) {
       await ioRedis.del(`login:${body.state}`);

@@ -1,0 +1,11 @@
+{
+  "source": "Result supplied by the user from the shared Supabase SQL Editor; not independently queried",
+  "roles": [],
+  "schemas": ["public"],
+  "public_table_grants": [
+    {"object_name": "pg_stat_statements_info", "schema_name": "extensions", "privilege_type": "SELECT"},
+    {"object_name": "pg_stat_statements", "schema_name": "extensions", "privilege_type": "SELECT"}
+  ],
+  "public_definer_functions": [],
+  "postiz_effective_table_access": []
+}

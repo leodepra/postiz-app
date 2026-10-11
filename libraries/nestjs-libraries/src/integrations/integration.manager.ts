@@ -39,7 +39,7 @@ import { WhopProvider } from '@gitroom/nestjs-libraries/integrations/social/whop
 import { MeweProvider } from '@gitroom/nestjs-libraries/integrations/social/mewe.provider';
 import { TumblrProvider } from '@gitroom/nestjs-libraries/integrations/social/tumblr.provider';
 
-export const socialIntegrationList: Array<SocialAbstract & SocialProvider> = [
+export const socialIntegrationList: Array<SocialAbstract & SocialProvider> = process.env.POSTIZ_LOCAL_ONLY === 'true' ? [new YoutubeProvider()] : [
   new XProvider(),
   new LinkedinProvider(),
   new LinkedinPageProvider(),

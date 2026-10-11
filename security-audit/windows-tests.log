@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: real Express requests cannot bypass local policy using method, case, encoding or path aliases
+ok 1 - real Express requests cannot bypass local policy using method, case, encoding or path aliases
+  ---
+  duration_ms: 62.6157
+  type: 'test'
+  ...
+# Subtest: authentication throttle includes query strings and Express aliases
+ok 2 - authentication throttle includes query strings and Express aliases
+  ---
+  duration_ms: 0.3566
+  type: 'test'
+  ...
+# Subtest: opaque sessions expire, revoke and invalidate on password changes; JWTs cannot authenticate
+ok 3 - opaque sessions expire, revoke and invalidate on password changes; JWTs cannot authenticate
+  ---
+  duration_ms: 4.6977
+  type: 'test'
+  ...
+# Subtest: integration AEAD is randomized and rejects tampering, wrong key and plaintext
+ok 4 - integration AEAD is randomized and rejects tampering, wrong key and plaintext
+  ---
+  duration_ms: 3.5361
+  type: 'test'
+  ...
+# Subtest: Prisma middleware encrypts creates, upserts, bulk writes and set updates without mutating input
+ok 5 - Prisma middleware encrypts creates, upserts, bulk writes and set updates without mutating input
+  ---
+  duration_ms: 26.3167
+  type: 'test'
+  ...
+# Subtest: egress proxy rejects unlisted destinations and private DNS results over a real socket
+ok 6 - egress proxy rejects unlisted destinations and private DNS results over a real socket
+  ---
+  duration_ms: 25.5246
+  type: 'test'
+  ...
+# Subtest: SSRF dispatcher blocks literal IPs even when DNS lookup would be bypassed
+ok 7 - SSRF dispatcher blocks literal IPs even when DNS lookup would be bypassed
+  ---
+  duration_ms: 249.7717
+  type: 'test'
+  ...
+# Subtest: SSRF blocks mapped IPv6, reserved, private, multicast and malformed addresses
+ok 8 - SSRF blocks mapped IPv6, reserved, private, multicast and malformed addresses
+  ---
+  duration_ms: 1.2081
+  type: 'test'
+  ...
+# Subtest: local middleware denies rebinding, cross-origin mutations and unused API surfaces
+ok 9 - local middleware denies rebinding, cross-origin mutations and unused API surfaces
+  ---
+  duration_ms: 2.3769
+  type: 'test'
+  ...
+# Subtest: local configuration fails closed and cookies are host-only
+ok 10 - local configuration fails closed and cookies are host-only
+  ---
+  duration_ms: 1.5303
+  type: 'test'
+  ...
+# Subtest: local media confines reads and rejects external URLs and traversal
+ok 11 - local media confines reads and rejects external URLs and traversal
+  ---
+  duration_ms: 7.1566
+  type: 'test'
+  ...
+# Subtest: Supabase configuration requires the pinned endpoint, private schema, restricted role and verified TLS
+ok 12 - Supabase configuration requires the pinned endpoint, private schema, restricted role and verified TLS
+  ---
+  duration_ms: 2.1312
+  type: 'test'
+  ...
+# Subtest: ephemeral encryption binds ciphertext to the record and rejects tampering and wrong keys
+ok 13 - ephemeral encryption binds ciphertext to the record and rejects tampering and wrong keys
+  ---
+  duration_ms: 2.6285
+  type: 'test'
+  ...
+# Subtest: Temporal payloads and failure attributes encrypt; plaintext, wrong key and tampering fail
+ok 14 - Temporal payloads and failure attributes encrypt; plaintext, wrong key and tampering fail
+  ---
+  duration_ms: 5.7837
+  type: 'test'
+  ...
+# Subtest: resumed uploads only attach credentials to the Google upload endpoint
+ok 15 - resumed uploads only attach credentials to the Google upload endpoint
+  ---
+  duration_ms: 1.7223
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1624.2849

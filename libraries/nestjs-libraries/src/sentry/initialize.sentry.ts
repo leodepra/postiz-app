@@ -26,6 +26,7 @@ export const setSentryUserContext = (params: {
 };
 
 export const initializeSentry = (appName: string, allowLogs = false) => {
+  if (process.env.POSTIZ_LOCAL_ONLY === 'true') return null;
   if (!process.env.NEXT_PUBLIC_SENTRY_DSN) {
     return null;
   }

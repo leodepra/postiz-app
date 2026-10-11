@@ -1,4 +1,6 @@
-import { TemporalModule } from 'nestjs-temporal-core';
+import { TemporalModule, TEMPORAL_CLIENT } from 'nestjs-temporal-core';
+import { Client } from '@temporalio/client';
+import { localTemporalDataConverter } from './local-payload-codec';
 import { socialIntegrationList } from '@gitroom/nestjs-libraries/integrations/integration.manager';
 import { emailQueues } from '@gitroom/nestjs-libraries/temporal/email.queues';
 
@@ -24,7 +26,7 @@ export const getTemporalModule = (
     Number(process.env.WORKER_CONCURRENCY_DIVIDER) || 1
   );
 
-  return TemporalModule.register({
+  const module = TemporalModule.register({
     isGlobal: true,
     connection: {
       address: process.env.TEMPORAL_ADDRESS || 'localhost:7233',
@@ -70,7 +72,8 @@ export const getTemporalModule = (
                   activityClasses: activityClasses!,
                   autoStart: true,
                   workerOptions: {
-                    maxConcurrentActivityTaskExecutions: concurrency || 1000000,
+                    ...(process.env.POSTIZ_LOCAL_ONLY === 'true' ? { dataConverter: { ...localTemporalDataConverter() } } : {}),
+                    maxConcurrentActivityTaskExecutions: process.env.POSTIZ_LOCAL_ONLY === 'true' ? Math.min(concurrency || 4, 4) : concurrency || 1000000,
                     // By default the SDK throttles heartbeat sends to 60s, so
                     // against the workflow's heartbeatTimeout one dropped send
                     // or a minute of event-loop lag eats most of the margin.
@@ -83,6 +86,7 @@ export const getTemporalModule = (
             // Activity-only Workers for emails, rate limited server side
             // across all workers to stay under the Resend limit
             ...Object.values(emailQueues)
+              .filter(() => process.env.POSTIZ_LOCAL_ONLY !== 'true')
               .filter(({ taskQueue }) => !excludeQueues.includes(taskQueue))
               .map(({ taskQueue, perSecond }) => ({
                 taskQueue,
@@ -97,4 +101,17 @@ export const getTemporalModule = (
         }
       : {}),
   });
+  if (process.env.POSTIZ_LOCAL_ONLY === 'true') {
+    // The integration library exposes a client provider but omits dataConverter
+    // in its options. Wrap that provider so client and workers use the same codec.
+    module.providers = module.providers!.map((provider: any) => provider.provide !== TEMPORAL_CLIENT ? provider : {
+      ...provider,
+      useFactory: async (...args: any[]) => {
+        const client = await provider.useFactory(...args);
+        if (!client) throw new Error('Local Temporal connection required');
+        return new Client({ connection: client.connection, namespace: process.env.TEMPORAL_NAMESPACE || 'default', dataConverter: localTemporalDataConverter() });
+      },
+    });
+  }
+  return module;
 };

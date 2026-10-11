@@ -17,6 +17,8 @@ import { TemporalRegisterMissingSearchAttributesModule } from '@gitroom/nestjs-l
 import { InfiniteWorkflowRegisterModule } from '@gitroom/nestjs-libraries/temporal/infinite.workflow.register';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
+import { isLocalProfile } from '@gitroom/helpers/security/local-profile';
+import { postgresEphemeralStore } from '@gitroom/nestjs-libraries/security/postgres-ephemeral-store';
 
 @Global()
 @Module({
@@ -39,7 +41,7 @@ import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
           limit: process.env.API_LIMIT ? Number(process.env.API_LIMIT) : 90,
         },
       ],
-      storage: new ThrottlerStorageRedisService(ioRedis),
+      storage: isLocalProfile() ? postgresEphemeralStore : new ThrottlerStorageRedisService(ioRedis),
     }),
   ],
   controllers: [],

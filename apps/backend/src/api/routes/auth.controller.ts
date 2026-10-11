@@ -76,34 +76,34 @@ export class AuthController {
 
       response.cookie('auth', jwt, {
         domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-        ...(!process.env.NOT_SECURED
+        ...(process.env.NOT_SECURED !== 'true'
           ? {
-              secure: true,
+              secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
               httpOnly: true,
-              sameSite: 'none',
+              sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
             }
           : {}),
-        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+        expires: new Date(Date.now() + (process.env.POSTIZ_LOCAL_ONLY === 'true' ? 30 * 60 * 1000 : 1000 * 60 * 60 * 24 * 365)),
       });
 
-      if (process.env.NOT_SECURED) {
+      if (process.env.NOT_SECURED === 'true') {
         response.header('auth', jwt);
       }
 
       if (typeof addedOrg !== 'boolean' && addedOrg?.organizationId) {
         response.cookie('showorg', addedOrg.organizationId, {
           domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-          ...(!process.env.NOT_SECURED
+          ...(process.env.NOT_SECURED !== 'true'
             ? {
-                secure: true,
+                secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
                 httpOnly: true,
-                sameSite: 'none',
+                sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
               }
             : {}),
-          expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+          expires: new Date(Date.now() + (process.env.POSTIZ_LOCAL_ONLY === 'true' ? 30 * 60 * 1000 : 1000 * 60 * 60 * 24 * 365)),
         });
 
-        if (process.env.NOT_SECURED) {
+        if (process.env.NOT_SECURED === 'true') {
           response.header('showorg', addedOrg.organizationId);
         }
       }
@@ -141,34 +141,34 @@ export class AuthController {
 
       response.cookie('auth', jwt, {
         domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-        ...(!process.env.NOT_SECURED
+        ...(process.env.NOT_SECURED !== 'true'
           ? {
-              secure: true,
+              secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
               httpOnly: true,
-              sameSite: 'none',
+              sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
             }
           : {}),
-        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+        expires: new Date(Date.now() + (process.env.POSTIZ_LOCAL_ONLY === 'true' ? 30 * 60 * 1000 : 1000 * 60 * 60 * 24 * 365)),
       });
 
-      if (process.env.NOT_SECURED) {
+      if (process.env.NOT_SECURED === 'true') {
         response.header('auth', jwt);
       }
 
       if (typeof addedOrg !== 'boolean' && addedOrg?.organizationId) {
         response.cookie('showorg', addedOrg.organizationId, {
           domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-          ...(!process.env.NOT_SECURED
+          ...(process.env.NOT_SECURED !== 'true'
             ? {
-                secure: true,
+                secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
                 httpOnly: true,
-                sameSite: 'none',
+                sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
               }
             : {}),
-          expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+          expires: new Date(Date.now() + (process.env.POSTIZ_LOCAL_ONLY === 'true' ? 30 * 60 * 1000 : 1000 * 60 * 60 * 24 * 365)),
         });
 
-        if (process.env.NOT_SECURED) {
+        if (process.env.NOT_SECURED === 'true') {
           response.header('showorg', addedOrg.organizationId);
         }
       }
@@ -226,11 +226,11 @@ export class AuthController {
     const state = `login-${makeSecureId(16)}`;
     response.cookie('oauth_state', state, {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-      ...(!process.env.NOT_SECURED
+      ...(process.env.NOT_SECURED !== 'true'
         ? {
-            secure: true,
+            secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
             httpOnly: true,
-            sameSite: 'none',
+            sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
           }
         : {}),
       expires: new Date(Date.now() + 1000 * 60 * 10),
@@ -255,17 +255,17 @@ export class AuthController {
 
     response.cookie('auth', activate, {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-      ...(!process.env.NOT_SECURED
+      ...(process.env.NOT_SECURED !== 'true'
         ? {
-            secure: true,
+            secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
             httpOnly: true,
-            sameSite: 'none',
+            sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
           }
         : {}),
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+      expires: new Date(Date.now() + (process.env.POSTIZ_LOCAL_ONLY === 'true' ? 30 * 60 * 1000 : 1000 * 60 * 60 * 24 * 365)),
     });
 
-    if (process.env.NOT_SECURED) {
+    if (process.env.NOT_SECURED === 'true') {
       response.header('auth', activate);
     }
 
@@ -362,17 +362,17 @@ export class AuthController {
 
     response.cookie('auth', jwt, {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-      ...(!process.env.NOT_SECURED
+      ...(process.env.NOT_SECURED !== 'true'
         ? {
-            secure: true,
+            secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
             httpOnly: true,
-            sameSite: 'none',
+            sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
           }
         : {}),
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+      expires: new Date(Date.now() + (process.env.POSTIZ_LOCAL_ONLY === 'true' ? 30 * 60 * 1000 : 1000 * 60 * 60 * 24 * 365)),
     });
 
-    if (process.env.NOT_SECURED) {
+    if (process.env.NOT_SECURED === 'true') {
       response.header('auth', jwt);
     }
 

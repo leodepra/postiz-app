@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { Logo } from '@gitroom/frontend/components/new-layout/logo';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+
 const ModeComponent = dynamic(
   () => import('@gitroom/frontend/components/layout/mode.component'),
   {
@@ -44,11 +44,8 @@ import { FirstBillingComponent } from '@gitroom/frontend/components/billing/firs
 import { TrialTracker } from '@gitroom/frontend/components/layout/gtm.component';
 import { setSentryUser } from '@gitroom/react/sentry/initialize.sentry.client';
 
-const jakartaSans = Plus_Jakarta_Sans({
-  weight: ['600', '500', '700'],
-  style: ['normal', 'italic'],
-  subsets: ['latin'],
-});
+// System fonts keep the local build independent of Google Fonts.
+const jakartaSans = { className: 'font-sans' };
 
 export const LayoutComponent = ({ children }: { children: ReactNode }) => {
   const fetch = useFetch();

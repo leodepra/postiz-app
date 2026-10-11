@@ -20,4 +20,12 @@ dist
 **/*.vscode
 .git
 .github
+**/.env
+**/.env.*
+**/.secrets
+**/*.pem
+**/*.key
+**/*.pfx
+local-data
+security-audit
 reports

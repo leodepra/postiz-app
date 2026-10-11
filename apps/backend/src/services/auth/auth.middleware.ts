@@ -8,15 +8,17 @@ import { getCookieUrlFromDomain } from '@gitroom/helpers/subdomain/subdomain.man
 import { HttpForbiddenException } from '@gitroom/nestjs-libraries/services/exception.filter';
 import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
 import { setSentryUserContext } from '@gitroom/nestjs-libraries/sentry/initialize.sentry';
+import { isLocalProfile } from '@gitroom/helpers/security/local-profile';
+import { localSessions } from '@gitroom/nestjs-libraries/security/local-session';
 
 export const removeAuth = (res: Response) => {
   res.cookie('auth', '', {
     domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-    ...(!process.env.NOT_SECURED
+    ...(process.env.NOT_SECURED !== 'true'
       ? {
-          secure: true,
+          secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
           httpOnly: true,
-          sameSite: 'none',
+          sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
         }
       : {}),
     expires: new Date(0),
@@ -40,7 +42,8 @@ export class AuthMiddleware implements NestMiddleware {
       // Verify the JWT signature only. Never trust authorization-relevant
       // claims (id, isSuperAdmin, activated) from the token body — always
       // re-resolve the user from the database using the id.
-      const payload = AuthService.verifyJWT(auth) as User | null;
+      const session = isLocalProfile() ? await localSessions.read(auth) : null;
+      const payload = session || (AuthService.verifyJWT(auth) as User | null);
       const orgHeader = req.cookies.showorg || req.headers.showorg;
 
       if (!payload?.id) {
@@ -53,7 +56,7 @@ export class AuthMiddleware implements NestMiddleware {
         throw new HttpForbiddenException();
       }
 
-      if (!user.activated) {
+      if (!user.activated || (session && !localSessions.matchesPassword(session, user))) {
         throw new HttpForbiddenException();
       }
 
@@ -99,7 +102,7 @@ export class AuthMiddleware implements NestMiddleware {
       const setOrg =
         organization.find((org) => org.id === orgHeader) || organization[0];
 
-      if (!organization) {
+      if (!setOrg) {
         throw new HttpForbiddenException();
       }
 

@@ -1,6 +1,8 @@
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { Request } from 'express';
+import { isLocalProfile } from '@gitroom/helpers/security/local-profile';
+import { isAuthenticationAttempt } from '@gitroom/helpers/security/local-routes';
 
 const isPublicComment = (method: string, url: string) =>
   method === 'POST' && /^\/public\/posts\/[^/]+\/comments/.test(url);
@@ -12,7 +14,7 @@ export class ThrottlerBehindProxyGuard extends ThrottlerGuard {
   ): Promise<boolean> {
     const { url, method } = context.switchToHttp().getRequest<Request>();
     if (
-      (method === 'POST' && url.includes('/public/v1/posts')) ||
+      (method === 'POST' && url.includes('/public/v1/posts')) || isAuthenticationAttempt(method, url) ||
       isPublicComment(method, url)
     ) {
       return super.canActivate(context);
@@ -24,6 +26,7 @@ export class ThrottlerBehindProxyGuard extends ThrottlerGuard {
   protected override async getTracker(
     req: Record<string, any>
   ): Promise<string> {
+    if (isLocalProfile()) return 'local-client';
     if (!req.org) {
       const forwarded = String(req.headers?.['x-forwarded-for'] || '')
         .split(',')[0]
@@ -44,6 +47,7 @@ export class ThrottlerRealIpGuard extends ThrottlerGuard {
   protected override async getTracker(
     req: Record<string, any>
   ): Promise<string> {
+    if (isLocalProfile()) return 'local-client';
     const forwarded = String(req.headers?.['x-forwarded-for'] || '');
     return forwarded.split(',')[0].trim() || req.ip;
   }

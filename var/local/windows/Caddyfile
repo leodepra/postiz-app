@@ -1,0 +1,42 @@
+{
+  admin off
+  auto_https off
+}
+http://localhost:7443 {
+  bind 127.0.0.1
+  header -Server
+  header Referrer-Policy no-referrer
+  header X-Content-Type-Options nosniff
+  request_body {
+    max_size 2GB
+  }
+  @file path_regexp file ^/uploads/([0-9]{4}/[0-9]{2}/[0-9]{2}/[a-f0-9]+\.[a-z0-9]+)$
+  handle @file {
+    rewrite * /media/local-file?file={re.file.1}
+    reverse_proxy 127.0.0.1:3001 {
+      header_up -X-Local-Internal
+      header_up -Auth
+      header_up -Impersonate
+    }
+  }
+  handle /uploads/* {
+    respond 404
+  }
+  handle /api/uploads/* {
+    respond 404
+  }
+  handle_path /api/* {
+    reverse_proxy 127.0.0.1:3001 {
+      header_up -X-Local-Internal
+      header_up -Auth
+      header_up -Impersonate
+    }
+  }
+  handle {
+    reverse_proxy 127.0.0.1:4200 {
+      header_up -X-Local-Internal
+      header_up -Auth
+      header_up -Impersonate
+    }
+  }
+}

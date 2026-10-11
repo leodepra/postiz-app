@@ -1,0 +1,24 @@
+require('./register.cjs');
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { LocalPayloadCodec } = require('../../libraries/nestjs-libraries/src/temporal/local-payload-codec.ts');
+const { failureConverter } = require('../../libraries/nestjs-libraries/src/temporal/local-failure-converter.ts');
+const { defaultPayloadConverter } = require('@temporalio/common');
+test('Temporal payloads and failure attributes encrypt; plaintext, wrong key and tampering fail', async () => {
+  process.env.LOCAL_TOKEN_KEY = 'd'.repeat(64);
+  const codec = new LocalPayloadCodec();
+  const payload = defaultPayloadConverter.toPayload({ token: 'synthetic-private-token' });
+  const encoded = await codec.encode([payload]);
+  assert.ok(!Buffer.from(encoded[0].data).includes(Buffer.from('synthetic-private-token')));
+  assert.deepEqual(defaultPayloadConverter.fromPayload((await codec.decode(encoded))[0]), { token: 'synthetic-private-token' });
+  assert.notDeepEqual(encoded, await codec.encode([payload]));
+  await assert.rejects(codec.decode([payload]));
+  process.env.LOCAL_TOKEN_KEY = 'e'.repeat(64); await assert.rejects(codec.decode(encoded));
+  process.env.LOCAL_TOKEN_KEY = 'd'.repeat(64);
+  encoded[0].data[15] ^= 1; await assert.rejects(codec.decode(encoded));
+  const failure = failureConverter.errorToFailure(new Error('synthetic-private-token'), defaultPayloadConverter);
+  assert.ok(!failure.message.includes('synthetic-private-token'));
+  assert.ok(failure.encodedAttributes);
+  const protectedFailure = await codec.encode([failure.encodedAttributes]);
+  assert.ok(!Buffer.from(protectedFailure[0].data).includes(Buffer.from('synthetic-private-token')));
+});

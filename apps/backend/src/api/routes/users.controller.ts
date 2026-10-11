@@ -31,6 +31,8 @@ import { UserAgent } from '@gitroom/nestjs-libraries/user/user.agent';
 import { TrackEnum } from '@gitroom/nestjs-libraries/user/track.enum';
 import { TrackService } from '@gitroom/nestjs-libraries/track/track.service';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
+import { isLocalProfile } from '@gitroom/helpers/security/local-profile';
+import { localSessions } from '@gitroom/nestjs-libraries/security/local-session';
 import {
   AuthorizationActions,
   Sections,
@@ -169,17 +171,17 @@ export class UsersController {
 
     response.cookie('impersonate', id, {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-      ...(!process.env.NOT_SECURED
+      ...(process.env.NOT_SECURED !== 'true'
         ? {
-            secure: true,
+            secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
             httpOnly: true,
-            sameSite: 'none',
+            sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
           }
         : {}),
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+      expires: new Date(Date.now() + (process.env.POSTIZ_LOCAL_ONLY === 'true' ? 30 * 60 * 1000 : 1000 * 60 * 60 * 24 * 365)),
     });
 
-    if (process.env.NOT_SECURED) {
+    if (process.env.NOT_SECURED === 'true') {
       response.header('impersonate', id);
     }
   }
@@ -310,17 +312,17 @@ export class UsersController {
   ) {
     response.cookie('showorg', id, {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-      ...(!process.env.NOT_SECURED
+      ...(process.env.NOT_SECURED !== 'true'
         ? {
-            secure: true,
+            secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
             httpOnly: true,
-            sameSite: 'none',
+            sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
           }
         : {}),
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+      expires: new Date(Date.now() + (process.env.POSTIZ_LOCAL_ONLY === 'true' ? 30 * 60 * 1000 : 1000 * 60 * 60 * 24 * 365)),
     });
 
-    if (process.env.NOT_SECURED) {
+    if (process.env.NOT_SECURED === 'true') {
       response.header('showorg', id);
     }
 
@@ -361,19 +363,20 @@ export class UsersController {
 
     await this._userService.deleteAccount(user.id);
 
-    return this.logout(response);
+    return this.logout(response, req);
   }
 
   @Post('/logout')
-  logout(@Res({ passthrough: true }) response: Response) {
+  async logout(@Res({ passthrough: true }) response: Response, @Req() req: Request) {
+    if (isLocalProfile()) await localSessions.revoke(req.cookies?.auth || req.headers.auth);
     response.header('logout', 'true');
     response.cookie('auth', '', {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-      ...(!process.env.NOT_SECURED
+      ...(process.env.NOT_SECURED !== 'true'
         ? {
-            secure: true,
+            secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
             httpOnly: true,
-            sameSite: 'none',
+            sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
           }
         : {}),
       maxAge: -1,
@@ -382,11 +385,11 @@ export class UsersController {
 
     response.cookie('showorg', '', {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-      ...(!process.env.NOT_SECURED
+      ...(process.env.NOT_SECURED !== 'true'
         ? {
-            secure: true,
+            secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
             httpOnly: true,
-            sameSite: 'none',
+            sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
           }
         : {}),
       maxAge: -1,
@@ -395,11 +398,11 @@ export class UsersController {
 
     response.cookie('impersonate', '', {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-      ...(!process.env.NOT_SECURED
+      ...(process.env.NOT_SECURED !== 'true'
         ? {
-            secure: true,
+            secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
             httpOnly: true,
-            sameSite: 'none',
+            sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
           }
         : {}),
       maxAge: -1,
@@ -433,14 +436,14 @@ export class UsersController {
     if (!req.cookies.track) {
       res.cookie('track', uniqueId, {
         domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
-        ...(!process.env.NOT_SECURED
+        ...(process.env.NOT_SECURED !== 'true'
           ? {
-              secure: true,
+              secure: process.env.POSTIZ_LOCAL_ONLY !== 'true',
               httpOnly: true,
-              sameSite: 'none',
+              sameSite: process.env.POSTIZ_LOCAL_ONLY === 'true' ? 'lax' : 'none',
             }
           : {}),
-        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+        expires: new Date(Date.now() + (process.env.POSTIZ_LOCAL_ONLY === 'true' ? 30 * 60 * 1000 : 1000 * 60 * 60 * 24 * 365)),
       });
     }
 
